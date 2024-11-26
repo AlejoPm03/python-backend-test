@@ -35,5 +35,5 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /usr/src/app/agro_test
 
 # Start the server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-#CMD [ "gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--threads", "8", "--timeout", "0", "agro_test.wsgi:application" ]
+#CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD [ "gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--threads", "8", "--timeout", "0", "agro_test.wsgi:application" ]
