@@ -50,4 +50,4 @@ urlpatterns = [
 	path("user/", include("apps.user.urls")),
 ] + required_urlpatterns + api_documentation_urlpatterns
 
-urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+#urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

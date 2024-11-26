@@ -1,37 +1,49 @@
 
 #
-# Django
+# For local environment
 #
+
 services:
+  postgres_agro_test:
+    container_name: postgres_agro_test
+    image: postgres:14-alpine
+    env_file:
+      - ./.env
+    volumes:
+      - data:/var/lib/postgresql/data
+    expose:
+      - "8080"
+      - "5432"
+    ports:
+      - "5432:5432"
+      - "8080:8080"
+
+  # Google proxy to use to configure SQL from local environment
+  cloudsqlproxy:
+    container_name: cloudsql-proxy
+    image: gcr.io/cloudsql-docker/gce-proxy:1.29.0-alpine
+    volumes:
+      - ./keys/google_local_credentials.json:/usr/src/app/keys/google_local_credentials.json
+    ports:
+      - 127.0.0.1:25432:5432
+    command: /cloud_sql_proxy -instances="${GOOGLE_CLOUD_PROJECT}:${POSTGRES_INSTANCE_REGION}:${POSTGRES_INSTANCE_NAME}"=tcp:0.0.0.0:5432 -credential_file=/usr/src/app/keys/google_local_credentials.json
+    restart: always
+
   agro_test:
     container_name: agro_test
     build:
       context: .
     ports:
-      - "8000:8000"
+      - 8000:8000
     volumes:
       - ./agro_test:/usr/src/app/agro_test
+      - ./keys/google_local_credentials.json:/usr/src/app/keys/google_local_credentials.json
     env_file:
       - ./.env
+    restart: always
     depends_on:
-      - postgres
-    restart: always
-
-#
-# Postgres
-#
-  postgres:
-    container_name: postgres
-    image: postgres:latest
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: always
+      - postgres_agro_test
+      - cloudsqlproxy
 
 volumes:
-  postgres_data:
+  data:

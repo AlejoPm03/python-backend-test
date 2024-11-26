@@ -23,6 +23,16 @@ import environ
 env = environ.Env(
 	PROJECT_SECRET_KEY = (str, os.getenv("PROJECT_SECRET_KEY")),
 	PROJECT_ENV = (str, os.getenv("PROJECT_ENV")),
+	GOOGLE_CLOUD_PROJECT = (str, os.getenv("GOOGLE_CLOUD_PROJECT")),
+	GOOGLE_BUCKET_NAME = (str, os.getenv("GOOGLE_BUCKET_NAME")),
+	DB_USE_PROXY = (bool, os.getenv("DB_USE_PROXY")),
+	POSTGRES_INSTANCE_REGION = (str, os.getenv("POSTGRES_INSTANCE_REGION")),
+	POSTGRES_INSTANCE_NAME = (str, os.getenv("POSTGRES_INSTANCE_NAME")),
+	POSTGRES_DB = (str, os.getenv("POSTGRES_DB")),
+	POSTGRES_USER = (str, os.getenv("POSTGRES_USER")),
+	POSTGRES_PASSWORD = (str, os.getenv("POSTGRES_PASSWORD")),
+	POSTGRES_HOST = (str, os.getenv("POSTGRES_HOST")),
+	POSTGRES_PORT = (str, os.getenv("POSTGRES_PORT")),
 )
 
 # Load environments variables
@@ -40,7 +50,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-4$+o&0jsbv2huaeowbvne3!jn@r!s&=xd_et9s!q(#*we9v#ne'
+SECRET_KEY = env("PROJECT_SECRET_KEY")
 
 # SECURITY WARNING: don"t run with debug turned on in production!
 # If the project is in dev mode, set debug to true
@@ -67,6 +77,8 @@ INSTALLED_APPS = [
 	'django.contrib.sessions',
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
+	# For google bucket storage
+	"storages",
 	# CORS
 	"corsheaders",
 	# Rest framework
@@ -92,6 +104,7 @@ MIDDLEWARE = [
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
+	"django.contrib.messages.middleware.MessageMiddleware",
 ]
 
 ROOT_URLCONF = 'agro_test.urls'
@@ -134,6 +147,11 @@ DATABASES = {
 	},
 }
 
+# If use proxy is set, change it to cloudsql-proxy
+if env("DB_USE_PROXY", default = False):
+	DATABASES["default"]["HOST"] = "cloudsql-proxy"
+	DATABASES["default"]["PORT"] = 5432
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -166,8 +184,20 @@ USE_I18N = True
 USE_TZ = True
 
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+STATIC_URL = '/statics/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'statics/')
+
+## Google bucket storage
+GS_BUCKET_NAME = env("GOOGLE_BUCKET_NAME")
+STATICFILES_DIRS = []
+DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+STATICFILES_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+GS_DEFAULT_ACL = "publicRead"
+STORAGES = {
+	"staticfiles": {
+		"BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+	},
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -194,3 +224,6 @@ GRAPH_MODELS ={
 	"all_applications": True,
 	"graph_models": True,
 }
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
